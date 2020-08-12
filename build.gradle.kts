@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     kotlin("jvm") version Plugins.KOTLIN_VERSION
+    id("org.jlleitschuh.gradle.ktlint") version Plugins.KTLINT_VERSION
 }
 
 allprojects {
@@ -24,11 +25,13 @@ subprojects {
         }
         resolutionStrategy.eachDependency {
             when (requested.group) {
-                "org.jetbrains.kotlinx" -> useVersion(when(requested.name) {
-                    "atomicfu" -> requested.version // Dependencies.KOTLINX_ATOMICFU_VERSION
-                    "kotlinx-coroutines-core-common" -> requested.version // Dependencies.KOTLINX_COROUTINES_CORE_COMMON_VERSION
-                    else -> Dependencies.KOTLINX_COROUTINES_VERSION
-                }!!)
+                "org.jetbrains.kotlinx" -> useVersion(
+                    when (requested.name) {
+                        "atomicfu" -> requested.version // Dependencies.KOTLINX_ATOMICFU_VERSION
+                        "kotlinx-coroutines-core-common" -> requested.version // Dependencies.KOTLINX_COROUTINES_CORE_COMMON_VERSION
+                        else -> Dependencies.KOTLINX_COROUTINES_VERSION
+                    }!!
+                )
                 "org.jetbrains.kotlin" -> useVersion(Plugins.KOTLIN_VERSION)
             }
         }

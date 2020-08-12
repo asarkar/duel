@@ -1,6 +1,7 @@
 object Plugins {
     const val KOTLIN_VERSION = "1.3.72"
     const val PROTOBUF_VERSION = "0.8.12"
+    const val KTLINT_VERSION = "9.3.0"
 }
 
 object Dependencies {
