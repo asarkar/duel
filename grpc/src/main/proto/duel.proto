@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package com.asarkar.duel.grpc;
+option java_multiple_files = true;
+
+service Duel {
+  rpc Shoot(stream ShotOrTruce) returns (stream ShotOrTruce);
+}
+
+message ShotOrTruce {
+  bool truce = 1;
+  int32 rand = 2;
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<section class="msngr" id="messenger">
+    <header class="msngr-header">
+        <div class="msngr-header-title">
+            <i class="fas fa-comment-alt"></i> Duel Board
+        </div>
+        <div class="msngr-header-options">
+            <span><i class="fas fa-cog"></i></span>
+        </div>
+    </header>
+
+    <main class="msngr-chat">
+        <div class="note">
+            <p>Press Start button.</p>
+        </div>
+        <hr>
+        <ul>
+            <message v-for="(msg, index) in messages" :msg="msg" :key="`msg-${index}`"></message>
+        </ul>
+    </main>
+
+    <div class="msngr-footer">
+        <button @click="start" :disabled="shouldDisable" class="msngr-start-btn">Start</button>
+    </div>
+
+</section>
+<script src="vue.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
