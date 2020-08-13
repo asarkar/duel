@@ -7,10 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -45,15 +42,15 @@ class Challenger constructor(
     }
 
     suspend fun shoot(shotsFiredAndReceived: SendChannel<Exchange>) {
-        val channel = Channel<ShotOrTruce>(UNLIMITED)
+        val shotsFired = Channel<ShotOrTruce>(UNLIMITED)
         val stub = DuelGrpc.newStub(this.channel)
         val requestObserver = stub.shoot(object : StreamObserver<ShotOrTruce> {
             override fun onNext(msg: ShotOrTruce) {
-                channel.offerOrFail(msg)
+                shotsFired.offerOrFail(msg)
             }
 
             override fun onError(t: Throwable) {
-                channel.close(t)
+                shotsFired.close(t)
             }
 
             override fun onCompleted() {}
@@ -63,7 +60,7 @@ class Challenger constructor(
 
         val ioScope = CoroutineScope(Dispatchers.IO)
         val job = ioScope.launch {
-            for (msg in channel) {
+            for (msg in shotsFired) {
                 shotsFiredAndReceived.send(Exchange(false, msg.truce))
                 var truce = msg.truce
 
@@ -75,7 +72,7 @@ class Challenger constructor(
 
                 if (truce) {
                     requestObserver.onCompleted()
-                    channel.close()
+                    shotsFired.close()
                     ioScope.cancel()
                 }
             }
@@ -87,13 +84,14 @@ class Challenger constructor(
     suspend fun shootFlow(shotsFiredAndReceived: SendChannel<Exchange>) {
         val shotsFired = MutableStateFlow(
             ShotOrTruce.newBuilder().setTruce(false).setRand(Random.nextInt()).build()
+                .also { LOG.debug("{}", false) }
         )
         val stub = DuelGrpcKt.DuelCoroutineStub(channel)
 
         val shotsReceived = stub.shoot(shotsFired.onEach {
             shotsFiredAndReceived.offerOrFail(Exchange(true, it.truce))
         })
-        val coroutineScope = CoroutineScope(Job())
+        val ioScope = CoroutineScope(Dispatchers.IO)
 
         val job = shotsReceived
             .onEach {
@@ -107,11 +105,51 @@ class Challenger constructor(
             .takeWhile { !it.truce }
             .onEach {
                 val `yield` = Random.nextBoolean()
+                LOG.debug("{}", `yield`)
                 shotsFired.value = ShotOrTruce.newBuilder().setTruce(`yield`).setRand(Random.nextInt()).build()
+                if (`yield`) {
+                    yield() // Give the last message a chance to be sent
+                    ioScope.cancel()
+                }
             }
-            .launchIn(coroutineScope)
+            .launchIn(ioScope)
 
         job.join()
-        coroutineScope.cancel()
+    }
+
+    suspend fun shootChannel(shotsFiredAndReceived: SendChannel<Exchange>) {
+        val shotsFired = Channel<ShotOrTruce>(UNLIMITED)
+        val stub = DuelGrpcKt.DuelCoroutineStub(channel)
+
+        shotsFired.offerOrFail(ShotOrTruce.newBuilder().setTruce(false).setRand(Random.nextInt()).build())
+            .also { LOG.debug("{}", false) }
+        val shotsReceived = stub.shoot(shotsFired.receiveAsFlow().onEach {
+            shotsFiredAndReceived.offerOrFail(Exchange(true, it.truce))
+        }.flowOn(Dispatchers.IO))
+        val ioScope = CoroutineScope(Dispatchers.IO)
+
+        val job = shotsReceived
+            .onEach {
+                shotsFiredAndReceived.offerOrFail(
+                    Exchange(
+                        false,
+                        it.truce
+                    )
+                )
+            }
+            .takeWhile { !it.truce }
+            .onEach {
+                val `yield` = Random.nextBoolean()
+                LOG.debug("{}", `yield`)
+                shotsFired.offerOrFail(ShotOrTruce.newBuilder().setTruce(`yield`).setRand(Random.nextInt()).build())
+                if (`yield`) {
+                    yield() // Give the last message a chance to be sent
+                    shotsFired.close()
+                    ioScope.cancel()
+                }
+            }
+            .launchIn(ioScope)
+
+        job.join()
     }
 }

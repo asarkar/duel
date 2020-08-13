@@ -11,20 +11,20 @@ import org.kodein.di.bind
 import org.kodein.di.multiton
 import java.util.concurrent.Executor
 
-data class ServerParams(val service: BindableService, val executor: Executor = MoreExecutors.directExecutor())
-data class ChannelParams(val executor: Executor = MoreExecutors.directExecutor())
+data class ServerParams(val name: String, val service: BindableService, val executor: Executor = MoreExecutors.directExecutor())
+data class ChannelParams(val name: String, val executor: Executor = MoreExecutors.directExecutor())
 
 val testDI = DI {
     bind<ManagedChannel>() with multiton { params: ChannelParams ->
         InProcessChannelBuilder
-            .forName("duel")
+            .forName(params.name)
             .executor(params.executor)
             .build()
     }
 
     bind<Server>() with multiton { params: ServerParams ->
         InProcessServerBuilder
-            .forName("duel")
+            .forName(params.name)
             .addService(params.service)
             .executor(params.executor)
             .build()

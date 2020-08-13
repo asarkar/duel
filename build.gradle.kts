@@ -71,6 +71,12 @@ subprojects {
                 testImplementation("org.assertj:assertj-core:${Dependencies.ASSERTJ_VERSION}")
             }
         }
+
+        tasks {
+            test {
+                testLogging.showStandardStreams = true
+            }
+        }
     }
 }
 

@@ -3,7 +3,7 @@ duel
 
 [![](https://github.com/asarkar/duel/workflows/CI%20Pipeline/badge.svg)](https://github.com/asarkar/duel/actions?query=workflow%3A%22CI+Pipeline%22)
 
-Simulates a [duel](https://en.wikipedia.org/wiki/Duel) and streams live updates.
+Simulates a [duel](https://en.wikipedia.org/wiki/Duel) and streams live updates. Live: https://asarkar-duel.herokuapp.com/
 
 ### Technologies Used
 

@@ -2,16 +2,16 @@ package com.asarkar.duel.grpc
 
 import com.asarkar.grpc.test.GrpcCleanupExtension
 import com.asarkar.grpc.test.Resources
+import io.grpc.BindableService
 import io.grpc.ManagedChannel
 import io.grpc.Server
+import io.grpc.inprocess.InProcessServerBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.debug.DebugProbes
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -26,31 +26,28 @@ import kotlin.time.ExperimentalTime
 @ExtendWith(GrpcCleanupExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DuelTest {
-    private lateinit var challenger: Challenger
+    private lateinit var resources: Resources
 
-    @BeforeAll
-    fun beforeAll(resources: Resources) {
-        val channelFactory: (ChannelParams) -> ManagedChannel by testDI.factory()
-        val grpcChannel = channelFactory(ChannelParams())
-        resources.register(grpcChannel)
-        challenger = Challenger(grpcChannel)
-
+    @ParameterizedTest(name = "[{index}] {2}")
+    @MethodSource("funProvider")
+    fun testShoot(
+        fn: KSuspendFunction2<Challenger, SendChannel<Exchange>, Unit>,
+        svc: BindableService,
+        unused: String
+    ) {
+        val name: String = InProcessServerBuilder.generateName()
         val serverFactory: (ServerParams) -> Server by testDI.factory()
-        val server = serverFactory(ServerParams(Opponent()))
+        val server = serverFactory(ServerParams(name, svc))
         resources.register(server)
         server.start()
-    }
 
-    @AfterAll
-    fun afterAll() {
-        challenger.close()
-    }
+        val channelFactory: (ChannelParams) -> ManagedChannel by testDI.factory()
+        val grpcChannel = channelFactory(ChannelParams(name))
+        resources.register(grpcChannel)
+        val client = Challenger(grpcChannel)
 
-    @ParameterizedTest(name = "[{index}] {1}")
-    @MethodSource("funProvider")
-    fun testShoot(fn: KSuspendFunction2<Challenger, SendChannel<Exchange>, Unit>, name: String) {
         val channel = Channel<Exchange>(UNLIMITED)
-        runBlocking { fn(challenger, channel) }
+        runBlocking { fn(client, channel) }
 
         val exchanges = mutableListOf<Exchange>()
         while (!channel.isEmpty) {
@@ -76,8 +73,9 @@ class DuelTest {
         @JvmStatic
         fun funProvider(): Stream<Arguments> {
             return Stream.of(
-                Arguments.of(Challenger::shoot, "shoot"),
-                Arguments.of(Challenger::shootFlow, "shootFlow")
+                Arguments.of(Challenger::shoot, Opponent(), "shoot"),
+                Arguments.of(Challenger::shootFlow, OpponentFlow(), "shootFlow"),
+                Arguments.of(Challenger::shootChannel, OpponentFlow(), "shootChannel")
             )
         }
     }
