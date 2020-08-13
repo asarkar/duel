@@ -3,6 +3,7 @@ object Plugins {
     const val PROTOBUF_VERSION = "0.8.12"
     const val KTLINT_VERSION = "9.3.0"
     const val SHADOW_VERSION = "6.0.0"
+    const val HEROKU_VERSION = "2.0.0"
 }
 
 object Dependencies {

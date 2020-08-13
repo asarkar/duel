@@ -27,3 +27,6 @@ To run from inside IntelliJ, create a new Run Configuration as shown below:
 3. `git push heroku master`
 4. `heroku logs --tail`
 5. `heroku open`
+
+See [this](https://help.heroku.com/PBGP6IDE/how-should-i-generate-an-api-key-that-allows-me-to-use-the-heroku-platform-api) 
+article about how to generate an API key. This key can then be set as `HEROKU_API_KEY` environment variable.

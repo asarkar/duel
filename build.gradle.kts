@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
@@ -5,6 +6,7 @@ plugins {
     kotlin("jvm") version Plugins.KOTLIN_VERSION
     id("org.jlleitschuh.gradle.ktlint") version Plugins.KTLINT_VERSION
     id("com.github.johnrengelman.shadow") version Plugins.SHADOW_VERSION
+    id("com.heroku.sdk.heroku-gradle") version Plugins.HEROKU_VERSION
 }
 
 allprojects {
@@ -94,4 +96,17 @@ tasks.withType<ShadowJar> {
 
 tasks.register("stage") {
     dependsOn(tasks.withType<ShadowJar>())
+}
+
+tasks.deployHeroku {
+    dependsOn(tasks.withType<ShadowJar>())
+}
+
+configure<com.heroku.sdk.HerokuExtension> {
+    appName = ObjectMapper()
+        .readTree(project.rootDir.resolve("app.json"))
+        .path("name")
+        .asText()
+    includes = tasks.shadowJar.get().outputs.files.map { "build/libs/${it.name}" }
+    isIncludeBuildDir = false
 }

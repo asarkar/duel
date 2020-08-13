@@ -1,5 +1,5 @@
 {
-  "name": "Duel",
+  "name": "asarkar-duel",
   "description": "Application that simulates a duel and streams live updates.",
   "image": "heroku/java"
 }

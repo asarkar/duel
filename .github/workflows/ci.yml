@@ -14,10 +14,10 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
 
       - name: Build and test
-        run: ./gradlew clean build -x ktlintCheck -x ktlintFormat
+        run: ./gradlew clean build -x ktlintCheck -x ktlintFormat --stacktrace
         continue-on-error: true
 
       - name: Test report
@@ -25,3 +25,8 @@ jobs:
 
       - name: Lint
         run: ./gradlew ktlintCheck ktlintFormat
+
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: ./gradlew deployHeroku --stacktrace
