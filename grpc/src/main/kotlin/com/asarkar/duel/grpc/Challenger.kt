@@ -24,6 +24,7 @@ class Challenger constructor(
 
     constructor(port: Int) : this(
         ManagedChannelBuilder.forAddress("localhost", port)
+            .intercept(LoggingInterceptor())
             .usePlaintext()
             .build()
     )
@@ -84,7 +85,6 @@ class Challenger constructor(
     suspend fun shootFlow(shotsFiredAndReceived: SendChannel<Exchange>) {
         val shotsFired = MutableStateFlow(
             ShotOrTruce.newBuilder().setTruce(false).setRand(Random.nextInt()).build()
-                .also { LOG.debug("{}", false) }
         )
         val stub = DuelGrpcKt.DuelCoroutineStub(channel)
 
@@ -106,7 +106,6 @@ class Challenger constructor(
             .takeWhile { !it.truce }
             .onEach {
                 val `yield` = Random.nextBoolean()
-                LOG.debug("{}", `yield`)
                 shotsFired.value = ShotOrTruce.newBuilder().setTruce(`yield`).setRand(Random.nextInt()).build()
                 if (`yield`) {
                     yield() // Give the last message a chance to be sent
@@ -123,7 +122,6 @@ class Challenger constructor(
         val stub = DuelGrpcKt.DuelCoroutineStub(channel)
 
         shotsFired.offerOrFail(ShotOrTruce.newBuilder().setTruce(false).setRand(Random.nextInt()).build())
-            .also { LOG.debug("{}", false) }
         val shotsReceived = stub.shoot(shotsFired.receiveAsFlow()
             .flowOn(Dispatchers.IO)
             .onEach {
@@ -144,7 +142,6 @@ class Challenger constructor(
             .takeWhile { !it.truce }
             .onEach {
                 val `yield` = Random.nextBoolean()
-                LOG.debug("{}", `yield`)
                 shotsFired.offerOrFail(ShotOrTruce.newBuilder().setTruce(`yield`).setRand(Random.nextInt()).build())
                 if (`yield`) {
                     yield() // Give the last message a chance to be sent

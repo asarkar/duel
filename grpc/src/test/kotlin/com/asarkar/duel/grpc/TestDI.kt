@@ -19,6 +19,7 @@ val testDI = DI {
         InProcessChannelBuilder
             .forName(params.name)
             .executor(params.executor)
+            .intercept(LoggingInterceptor())
             .build()
     }
 
