@@ -17,5 +17,5 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 application {
-    mainClass.set("io.ktor.server.netty.DevelopmentEngine")
+    mainClass.set("io.ktor.server.netty.EngineMain")
 }

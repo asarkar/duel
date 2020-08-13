@@ -29,7 +29,8 @@ var vm = new Vue({
     };
   },
   created: function () {
-    this.socket = new WebSocket("ws://" + window.location.host + "/ws");
+    let protocol = location.protocol.startsWith("https") ? "wss" : "ws";
+    this.socket = new WebSocket(protocol + "://" + location.host + "/ws");
 
     let vm = this;
     this.socket.onerror = function () {

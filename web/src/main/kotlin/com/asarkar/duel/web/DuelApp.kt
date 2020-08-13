@@ -33,6 +33,8 @@ class DuelApp {
     private val server = DuelServer()
 
     @KtorExperimentalAPI
+    // A Ktor module is just a user-defined function receiving the Application class that is in charge of configuring
+    // the server pipeline, install features, registering routes, handling requests, etc.
     fun Application.main() {
         // This adds automatically Date and Server headers to each response, and would allow you to configure
         // additional headers served to each response.

@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -21,6 +23,8 @@ private fun <T> SendChannel<T>.offerOrFail(item: T) = check(this.offer(item)) { 
 class Challenger constructor(
     private val channel: GrpcChannel
 ) : Closeable {
+    private val LOG: Logger = LoggerFactory.getLogger(Challenger::class.java)
+
     constructor(port: Int) : this(
         ManagedChannelBuilder.forAddress("localhost", port)
             .usePlaintext()
@@ -37,6 +41,7 @@ class Challenger constructor(
                 .awaitTermination(2, TimeUnit.SECONDS)
                 .also { if (!it) channel.shutdownNow() }
         }
+        LOG.info("Client shutdown complete")
     }
 
     suspend fun shoot(shotsFiredAndReceived: SendChannel<Exchange>) {

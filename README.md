@@ -14,4 +14,16 @@ Simulates a [duel](https://en.wikipedia.org/wiki/Duel) and streams live updates.
 
 ### Running Locally
 
-Run `./gradlew clean run` and go to the URL shown on the console once the application has started. 
+Run `./gradlew clean run` and go to the URL shown on the console once the application has started.
+
+To run from inside IntelliJ, create a new Run Configuration as shown below:
+
+![DuelApp](DuelApp.jpg)
+
+### Deploying to Heroku
+
+1. Commit all changes locally.
+2. `heroku login`
+3. `git push heroku master`
+4. `heroku logs --tail`
+5. `heroku open`
