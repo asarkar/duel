@@ -94,6 +94,7 @@ class Challenger constructor(
         val ioScope = CoroutineScope(Dispatchers.IO)
 
         val job = shotsReceived
+            .flowOn(Dispatchers.IO)
             .onEach {
                 shotsFiredAndReceived.offerOrFail(
                     Exchange(
@@ -123,12 +124,15 @@ class Challenger constructor(
 
         shotsFired.offerOrFail(ShotOrTruce.newBuilder().setTruce(false).setRand(Random.nextInt()).build())
             .also { LOG.debug("{}", false) }
-        val shotsReceived = stub.shoot(shotsFired.receiveAsFlow().onEach {
-            shotsFiredAndReceived.offerOrFail(Exchange(true, it.truce))
-        }.flowOn(Dispatchers.IO))
+        val shotsReceived = stub.shoot(shotsFired.receiveAsFlow()
+            .flowOn(Dispatchers.IO)
+            .onEach {
+                shotsFiredAndReceived.offerOrFail(Exchange(true, it.truce))
+            })
         val ioScope = CoroutineScope(Dispatchers.IO)
 
         val job = shotsReceived
+            .flowOn(Dispatchers.IO)
             .onEach {
                 shotsFiredAndReceived.offerOrFail(
                     Exchange(

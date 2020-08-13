@@ -19,6 +19,7 @@ class OpponentFlow : DuelGrpcKt.DuelCoroutineImplBase() {
 
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         requests
+            .flowOn(Dispatchers.IO)
             .takeWhile { !it.truce }
             .onEach {
                 val `yield` = Random.nextBoolean()
