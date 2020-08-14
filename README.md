@@ -30,3 +30,28 @@ To run from inside IntelliJ, create a new Run Configuration as shown below:
 
 See [this](https://help.heroku.com/PBGP6IDE/how-should-i-generate-an-api-key-that-allows-me-to-use-the-heroku-platform-api) 
 article about how to generate an API key. This key can then be set as `HEROKU_API_KEY` environment variable.
+
+### Distributed Tracing using OpenTelemetry and Jaeger
+
+[opentelemetry-java-instrumentation](https://github.com/open-telemetry/opentelemetry-java-instrumentation) works OOTB.
+
+**Steps:**
+
+1. Download [opentelemetry-javaagent-all.jar](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent-all.jar).
+2. Start Jaegar Docker container locally:
+   ```
+   docker run --rm -it --name jaeger \
+   -p 16686:16686 \
+   -p 14250:14250 \
+   jaegertracing/all-in-one
+   ```
+3. Start application:
+   ```
+   java -javaagent:/path/to/opentelemetry-javaagent-all.jar \
+   -Dotel.exporter=jaeger \
+   -Dotel.jaeger.service.name=duel \
+   -Dotel.jaeger.endpoint=localhost:14250 \
+   -jar build/libs/duel.jar
+   ```
+4. Go to http://0.0.0.0:8080/ and click on Start button.
+5. Go to http://localhost:16686/ and search for traces.
